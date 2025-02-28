@@ -4,4 +4,3 @@ pymongo
 sentence_transformers
 transformers
 bson
-io
