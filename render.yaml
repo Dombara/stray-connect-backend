@@ -1,0 +1,10 @@
+services:
+  - name: customer-churn-api  # Name of your service
+    type: web  # Web service (since Flask is an API)
+    runtime: python  # The runtime environment (Python)
+    plan: free  # Deployment plan (can be starter, pro, etc.)
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"  # Command to install dependencies
+    startCommand: "gunicorn -w 4 -b 0.0.0.0:10000 app:app"  # Command to start the Flask app
+    envVars:
+      - key: PORT
+        value: 10000
