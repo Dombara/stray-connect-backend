@@ -15,6 +15,8 @@ fs = GridFS(db)
 
 # Load NLP Models
 description_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+
 classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
 # Predefined categories for classification
@@ -113,6 +115,185 @@ def report():
     except Exception as e:
         print(f"Error in report route: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/insert-animals', methods=['POST'])
+def insert_animals():
+    try:
+        animals = request.json
+        db.animals.insert_one(animals)
+        return jsonify({"message": "Animals inserted successfully"}), 200
+    except Exception as e:
+        print(f"Error in insert_animals route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+
+
+
+
+@app.route('/insert-reports', methods=['POST'])
+def insert_reports():
+    try:
+        # Extract form data
+        location = request.form.get("location")
+        description = request.form.get("description")
+        animal_type = request.form.get("animal_type")
+        condition = request.form.get("condition")
+
+        # Check for missing fields
+        if not all([location, description, animal_type, condition]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Handle image upload
+        image = request.files.get("photo")
+        image_id = None
+        if image:
+            image_id = fs.put(image.read(), filename=image.filename, content_type=image.content_type)
+
+        # Prepare report data
+        report_data = {
+            "location": location,
+            "description": description,
+            "animal_type": animal_type,
+            "condition": condition,
+            "image_id": str(image_id) if image_id else None  # Store image_id if available
+        }
+
+        # Insert report into MongoDB
+        db.reports.insert_one(report_data)
+
+        return jsonify({
+            "message": "Report inserted successfully",
+            "report": report_data  # Return the inserted report details
+        }), 200
+
+    except Exception as e:
+        print(f"Error in insert_reports route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+@app.route('/get-animals', methods=['GET'])
+def get_animals():
+    try:
+        animals = list(db.animals.find({}, {"_id": 0}))
+        return jsonify(animals), 200
+    except Exception as e:
+        print(f"Error in get_animals route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+
+
+@app.route('/get-reports', methods=['GET'])
+def get_reports():
+    try:
+        reports = list(db.reports.find({}, {"_id": 0}))
+        return jsonify(reports), 200
+    except Exception as e:
+        print(f"Error in get_reports route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+@app.route('/get-lost-and-found', methods=['GET'])
+def get_lost_and_found():
+    try:
+        # Fetch all reports with category "Lost Pet Report"
+        lost_and_found = list(db.reports.find({"category": "Lost Pet Report"}, {"_id": 0}))
+        return jsonify(lost_and_found), 200
+    except Exception as e:
+        print(f"Error in get_lost_and_found route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+
+
+
+
+
+@app.route('insert-lost-and-found', methods=['POST'])
+def insert_lost_and_found():
+    try:
+        # Extract form data
+        owner_name = request.form.get("owner_name")
+        pet_name = request.form.get("pet_name")
+        breed = request.form.get("breed")
+        location = request.form.get("location")
+        description = request.form.get("description")
+        animal_type = request.form.get("animal_type")
+        last_seen = request.form.get("last_seen")
+        contact = request.form.get("contact")
+        # image = request.files.get("photo")
+
+        if not all([owner_name, pet_name, breed, location, description, animal_type, last_seen, contact]):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        image=request.files.get("photo")
+        image_id=None
+
+        if image:
+            image_id=fs.put(image.read(),filename=image.filename,content_type=image.content_type)
+
+        lost_pet_data = {
+            "owner_name": owner_name,
+            "pet_name": pet_name,
+            "breed": breed,
+            "location": location,
+            "description": description,
+            "animal_type": animal_type,
+            "last_seen": last_seen,
+            "contact": contact,
+            "image_id": str(image_id) if image_id else None  # Store image_id if available
+        }
+
+        db.lost_and_found.insert_one(lost_pet_data)
+
+        return jsonify({
+            "message": "Lost & Found report inserted successfully",
+            "report": lost_pet_data  # Return the inserted data
+        }), 200
+
+        
+    except Exception as e:
+        print(f"Error in insert_lost_and_found route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
+
+
+@app.route('get-lost-and-found', methods=['GET'])
+def get_lost_and_found():
+    try:
+        lost_and_found_data = db.lost_and_found.find()
+        return jsonify({"lost_and_found": list(lost_and_found_data)}), 200
+    except Exception as e:
+        print(f"Error in get_lost_and_found route: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
