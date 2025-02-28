@@ -202,18 +202,34 @@ def get_reports():
 
 
 
-@app.route('/get-lost-and-found', methods=['GET'])
-def get_lost_and_found():
-    try:
-        # Fetch all reports with category "Lost Pet Report"
-        lost_and_found = list(db.reports.find({"category": "Lost Pet Report"}, {"_id": 0}))
-        return jsonify(lost_and_found), 200
-    except Exception as e:
-        print(f"Error in get_lost_and_found route: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+# @app.route('/get-lost-and-found', methods=['GET'])
+# def get_lost_and_found():
+#     try:
+#         # Fetch all reports with category "Lost Pet Report"
+#         lost_and_found = list(db.reports.find({"category": "Lost Pet Report"}, {"_id": 0}))
+#         return jsonify(lost_and_found), 200
+#     except Exception as e:
+#         print(f"Error in get_lost_and_found route: {str(e)}")
+#         return jsonify({"error": str(e)}), 500
     
 
 
+# app.post("/post-lost-pet", async (req, res) => {
+#   try {
+#     const { name, ownername, type, description, lastseen, contact, photo } = req.body;
+#     if (!name || !ownername || !type || !description || !lastseen || !contact) {
+#       return res.status(400).json({ error: "All fields except photo are required." });
+#     }
+
+#     const newPet = new Pet({ name, ownername, type, description, lastseen, contact, photo });
+#     await newPet.save();
+
+#     res.status(201).json({ message: "Lost pet reported successfully!", pet: newPet });
+#   } catch (error) {
+#     console.error("Error saving pet data:", error);
+#     res.status(500).json({ error: "Internal Server Error" });
+#   }
+# });
 
 
 
@@ -241,14 +257,14 @@ def insert_lost_and_found():
             image_id=fs.put(image.read(),filename=image.filename,content_type=image.content_type)
 
         lost_pet_data = {
-            "owner_name": owner_name,
             "pet_name": pet_name,
-            "breed": breed,
-            "location": location,
-            "description": description,
+            "owner_name": owner_name,
             "animal_type": animal_type,
+            "description": description,
             "last_seen": last_seen,
             "contact": contact,
+            "breed": breed,
+            "location": location,
             "image_id": str(image_id) if image_id else None  # Store image_id if available
         }
 
@@ -285,6 +301,7 @@ def get_lost_and_found():
 
 
 
+        # name, ownername, type, description, lastseen, contact, photo 
 
 
 
@@ -300,3 +317,4 @@ def get_lost_and_found():
 # Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)  # Prevents WinError 10038
+
