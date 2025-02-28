@@ -78,9 +78,6 @@ def report():
             return jsonify({"error": "Missing required fields"}), 400
         
         image = request.files.get("photo")
-        image_id = None
-        if image:
-            image_id = fs.put(image.read(), filename=image.filename, content_type=image.content_type)
 
         # Classify the report
         category = classify_report(description)
@@ -91,50 +88,33 @@ def report():
         # Retrieve the most similar report from the database
         similar_report = db.reports.find_one({"description": most_similar_description})
 
-        similar_image_id = similar_report.get("image_id") if similar_report else None
+        if similar_report:
+            similar_report_data = {
+                "location": similar_report.get("location"),
+                "description": similar_report.get("description"),
+                "animal_type": similar_report.get("animal_type"),
+                "condition": similar_report.get("condition"),
+                "category": similar_report.get("category"),
+                "image_url": f"/get-image/{similar_report.get('image_id')}" if similar_report.get("image_id") else None
+            }
+        else:
+            similar_report_data = None  # No similar report found
 
-        report_data = {
+        response_data = {
             "location": location,
             "description": description,
             "animal_type": animal_type,
             "condition": condition,
             "category": category,
-            "most_similar_description": most_similar_description,
-            "image_id": str(image_id) if image_id else None
+            "most_similar_report": similar_report_data  # Returning full data of most similar report
         }
 
-        # Insert into reports collection
-        # result = db.reports.insert_one(report_data)
-
-        return jsonify({
-            "message": "Reported successfully",
-            # "report_id": str(result.inserted_id),
-            "most_similar_description": most_similar_description,
-            "similar_image_id": str(similar_image_id) if similar_image_id else None,
-            "image_id": str(image_id) if image_id else None
-        }), 201
+        return jsonify(response_data), 200
     except Exception as e:
         print(f"Error in report route: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
-# Route to fetch all reports
-@app.route('/get-reports', methods=['GET'])
-def get_reports():
-    try:
-        reports = list(db.reports.find({}, {"_id": 0}))
-        return jsonify({"reports": reports}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Route to get an animal's image by ID
-@app.route('/get-image/<image_id>', methods=['GET'])
-def get_image(image_id):
-    try:
-        image_data = fs.get(ObjectId(image_id))
-        return send_file(io.BytesIO(image_data.read()), mimetype=image_data.content_type)
-    except Exception as e:
-        return jsonify({"error": "Image not found"}), 404
 
 # Run the Flask app
 if __name__ == "__main__":
